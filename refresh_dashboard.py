@@ -381,7 +381,7 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
     # ═══ A. UPDATE HEADER DATE ═══
     html = re.sub(
         r'(FRED API \+ JPM GTM PDF \| )\w+ \d+, \d{4}',
-        f'\\1{today}',
+        f'\\g<1>{today}',
         html
     )
 
@@ -391,10 +391,10 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
     y10_val = fred["DGS10"][1]
 
     html = re.sub(r'S&amp;P [\d,]+', f'S&amp;P {sp_val:,.0f}', html)
-    html = re.sub(r'(pill[^>]*>)S&P [\d,]+', f'\\1S&P {sp_val:,.0f}', html)
+    html = re.sub(r'(pill[^>]*>)S&P [\d,]+', f'\\g<1>S&P {sp_val:,.0f}', html)
     html = re.sub(r'(pill[^>]*>)10Y [\d.]+%', f'\\g<1>10Y {y10_val:.1f}%', html)
-    html = re.sub(r'(pill[^>]*>)NL \$[\d.]+T', f'\\1NL ${nl["nl_t"]:.1f}T', html)
-    html = re.sub(r'(pill[^>]*>)VIX [\d.]+', f'\\1VIX {vix_val:.1f}', html)
+    html = re.sub(r'(pill[^>]*>)NL \$[\d.]+T', f'\\g<1>NL ${nl["nl_t"]:.1f}T', html)
+    html = re.sub(r'(pill[^>]*>)VIX [\d.]+', f'\\g<1>VIX {vix_val:.1f}', html)
 
     # ═══ C. UPDATE NL DATA ARRAY (for chart) ═══
     nl_js_items = []
@@ -454,18 +454,18 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
     # Replace CPI chart labels and data within the makeChart call
     html = re.sub(
         r"(makeChart\('c-cpi'.*?labels:\[)[^\]]+(\])",
-        "\\1" + ",".join(f"'{l}'" for l in cpi_labels) + "\\2",
+        "\\g<1>" + ",".join(f"'{l}'" for l in cpi_labels) + "\\g<2>",
         html,
         flags=re.DOTALL
     )
     html = re.sub(
         r"(label:'CPI'.*?data:\[)[^\]]+(\])",
-        "\\1" + ",".join(str(v) for v in cpi_vals) + "\\2",
+        "\\g<1>" + ",".join(str(v) for v in cpi_vals) + "\\g<2>",
         html
     )
     html = re.sub(
         r"(label:'Core'.*?data:\[)[^\]]+(\])",
-        "\\1" + ",".join(str(v) for v in core_vals) + "\\2",
+        "\\g<1>" + ",".join(str(v) for v in core_vals) + "\\g<2>",
         html
     )
 
@@ -476,7 +476,7 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
         """Update KPI value that follows a specific label."""
         nonlocal html
         pattern = f'({re.escape(label_text)}</div><div class="kpi-value">)[^<]+(</div>)'
-        html = re.sub(pattern, f'\\1{new_value}\\2', html)
+        html = re.sub(pattern, f'\\g<1>{new_value}\\g<2>', html)
 
     # S&P 500
     update_kpi("S&P 500", f"{sp_val:,.0f}")
@@ -540,9 +540,10 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
     sent = fred["UMCSENT"][1]
     update_kpi("Sentiment", f"{sent:.1f}")
 
-    # Claims
+    # Claims (ICSA returns actual number, convert to K)
     claims = fred["ICSA"][1]
-    update_kpi("Claims", f"{claims:.0f}K")
+    claims_k = claims / 1000 if claims > 1000 else claims
+    update_kpi("Claims", f"{claims_k:.0f}K")
 
     # NFP
     update_kpi("NFP", f"{nfp_latest:+.0f}K")
