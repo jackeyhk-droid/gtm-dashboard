@@ -152,28 +152,48 @@ def pull_nl_data():
     """Pull NL components and compute Net Liquidity with full history."""
     print("\n═══ NET LIQUIDITY CALCULATION ═══")
 
-    # Latest values
+    # WALCL is the anchor — publishes weekly on Wednesdays
     walcl = fetch_fred("WALCL", limit=1)
-    tga = fetch_fred("WTREGEN", limit=1)
-    rrp = fetch_fred("RRPONTSYD", limit=1)
-
-    if not walcl or not tga or not rrp:
-        print("ERROR: Could not fetch NL components")
+    if not walcl:
+        print("ERROR: Could not fetch WALCL")
         return None
 
-    w_val = walcl[0][1]  # Millions
-    t_val = tga[0][1]    # Millions
-    r_val = rrp[0][1]    # Billions! Convert to Millions
-    r_val_m = r_val * 1000
+    anchor_date = walcl[0][0]  # e.g. "2026-03-18" (Wednesday)
+    w_val = walcl[0][1]
+
+    # Align TGA and RRP to the WALCL Wednesday anchor date
+    # Pull recent daily data, then find the value on or before anchor_date
+    tga_recent = fetch_fred("WTREGEN", limit=10, sort="desc")
+    rrp_recent = fetch_fred("RRPONTSYD", limit=10, sort="desc")
+
+    t_val = None
+    for date, val in tga_recent:
+        if date <= anchor_date:
+            t_val = val
+            print(f"  TGA aligned: {date} → {val:,.0f}M")
+            break
+
+    r_val = None
+    for date, val in rrp_recent:
+        if date <= anchor_date:
+            r_val = val
+            print(f"  RRP aligned: {date} → {val}B")
+            break
+
+    if t_val is None or r_val is None:
+        print("ERROR: Could not align TGA/RRP to WALCL anchor date")
+        return None
+
+    r_val_m = r_val * 1000  # Billions → Millions
 
     nl_m = w_val - t_val - r_val_m
     nl_t = nl_m / 1_000_000
 
-    print(f"  WALCL:  {w_val:,.0f}M  (${w_val/1e6:.3f}T)")
+    print(f"  WALCL:  {w_val:,.0f}M  (${w_val/1e6:.3f}T)  [{anchor_date}]")
     print(f"  TGA:    {t_val:,.0f}M  (${t_val/1e6:.3f}T)")
-    print(f"  RRP:    {r_val:,.1f}B → {r_val_m:,.0f}M")
+    print(f"  RRP:    {r_val:.1f}B → {r_val_m:,.0f}M")
     print(f"  NL:     {nl_m:,.0f}M  (${nl_t:.3f}T)")
-    print(f"  Date:   {walcl[0][0]}")
+    print(f"  Anchor: {anchor_date} (WALCL Wednesday)")
 
     # History for chart (monthly sampling, weekly for last year)
     print("\n--- Building NL history for chart ---")
