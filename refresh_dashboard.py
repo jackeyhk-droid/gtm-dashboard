@@ -179,8 +179,8 @@ def pull_nl_data():
     print("\n--- Building NL history for chart ---")
     walcl_hist = fetch_fred("WALCL", limit=600, start="2015-01-01", sort="asc")
     tga_hist = fetch_fred("WTREGEN", limit=600, start="2015-01-01", sort="asc")
-    rrp_hist = fetch_fred("RRPONTSYD", limit=2000, start="2015-01-01", sort="asc")
-    sp_hist = fetch_fred("SP500", limit=3000, start="2015-01-01", sort="asc")
+    rrp_hist = fetch_fred("RRPONTSYD", limit=4000, start="2015-01-01", sort="asc")
+    sp_hist = fetch_fred("SP500", limit=4000, start="2015-01-01", sort="asc")
 
     # Build lookup maps for alignment
     tga_map = {d: v for d, v in tga_hist}
