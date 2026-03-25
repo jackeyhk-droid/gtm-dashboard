@@ -480,6 +480,14 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
 
     # S&P 500
     update_kpi("S&P 500", f"{sp_val:,.0f}")
+    # Update S&P date sub-label
+    sp_date = datetime.strptime(fred["SP500"][0], "%Y-%m-%d").strftime("%b %d, %Y")
+    html = re.sub(
+        r'(S&P 500</div><div class="kpi-value">[^<]+</div><div class="kpi-sub">)[^<]+(</div>)',
+        f'\\g<1>{sp_date}\\g<2>',
+        html,
+        count=1
+    )
 
     # VIX
     update_kpi("VIX", f"{vix_val:.1f}")
