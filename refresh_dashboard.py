@@ -212,18 +212,8 @@ def pull_nl_data():
                 "sp": round(s, 0),
             })
 
-    # Sample: monthly for old data, weekly for last 12 months
-    cutoff = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
-    sampled = []
-    seen_months = set()
-    for item in nl_history:
-        if item["date"] >= cutoff:
-            sampled.append(item)  # Keep all weekly
-        else:
-            month_key = item["date"][:7]
-            if month_key not in seen_months:
-                seen_months.add(month_key)
-                sampled.append(item)
+    # Keep ALL weekly points — no sampling, maximum accuracy
+    sampled = nl_history
 
     print(f"  NL history: {len(sampled)} points ({sampled[0]['date']} to {sampled[-1]['date']})")
 
