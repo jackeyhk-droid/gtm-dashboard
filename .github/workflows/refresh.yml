@@ -1,0 +1,42 @@
+name: Refresh GTM Dashboard
+
+on:
+  # 自動排程：每週五 UTC 02:00（美東週四 22:00，台灣週五 10:00）
+  schedule:
+    - cron: '0 2 * * 5'
+  
+  # 手動觸發按鈕
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # 允許推送更新
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run refresh script
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python refresh_dashboard.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add gtm-dashboard.html
+          # Only commit if there are changes
+          git diff --staged --quiet || git commit -m "Update GTM dashboard — $(date +'%b %d, %Y')"
+          git push
