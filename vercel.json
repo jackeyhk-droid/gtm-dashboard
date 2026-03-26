@@ -1,5 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/", "destination": "/gtm-dashboard.html" }
-  ]
-}
