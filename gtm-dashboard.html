@@ -1,3 +1,21 @@
+<script>
+(function fix() {
+  var me = document.currentScript || document.querySelector('.sqs-block-code');
+  if (me) {
+    var sec = me.closest('section');
+    if (sec) {
+      sec.setAttribute('style', 'padding:0!important;min-height:0!important;background:#060a10!important');
+    }
+  }
+  // Also try removing the style attribute entirely
+  document.querySelectorAll('section').forEach(function(s) {
+    var st = s.getAttribute('style') || '';
+    if (st.indexOf('calc(8vmax') > -1 || st.indexOf('padding') > -1) {
+      s.setAttribute('style', 'padding:0!important;min-height:0!important;background:#060a10!important');
+    }
+  });
+})();
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
