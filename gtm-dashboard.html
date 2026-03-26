@@ -1091,24 +1091,5 @@ window.addEventListener('afterprint', function() {
   setTimeout(initCharts, 100);
 });
 </script>
-  <script>
-// Remove Squarespace section padding
-(function() {
-  var el = document.querySelector('[data-fluid-engine-section]');
-  if (el) {
-    el.style.setProperty('padding-top', '0', 'important');
-    el.style.setProperty('padding-bottom', '0', 'important');
-  }
-  // Also try parent section
-  var block = document.querySelector('.sqs-block-code');
-  if (block) {
-    var section = block.closest('section, [data-sqs-section]');
-    if (section) {
-      section.style.setProperty('padding-top', '0', 'important');
-      section.style.setProperty('padding-bottom', '0', 'important');
-    }
-  }
-})();
-</script>
 </body>
 </html>
