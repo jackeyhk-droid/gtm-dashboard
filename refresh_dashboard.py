@@ -38,7 +38,7 @@ if not API_KEY:
     sys.exit(1)
 
 BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
-HTML_FILE = "gtm-dashboard.html"
+HTML_FILE = "index.html"
 
 # ═══════════════════════════════════════════════════════════════
 # FRED API HELPERS
