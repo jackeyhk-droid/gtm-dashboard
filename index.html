@@ -366,9 +366,9 @@ tbody tr:hover { background: rgba(255,255,255,0.03); }
     </div>
     <div class="header-pills">
       <span class="pill" style="background:rgba(0,230,138,0.12);color:var(--green)">S&P 6,477</span>
-      <span class="pill" style="background:rgba(0,212,255,0.12);color:var(--cyan)">10Y 4.3%</span>
+      <span class="pill" style="background:rgba(0,212,255,0.12);color:var(--cyan)">10Y 4.4%</span>
       <span class="pill" style="background:rgba(255,184,51,0.12);color:var(--gold)">NL $5.8T</span>
-      <span class="pill" style="background:rgba(255,77,106,0.12);color:var(--red)">VIX 25.3</span>
+      <span class="pill" style="background:rgba(255,77,106,0.12);color:var(--red)">VIX 27.4</span>
     </div>
   </div>
   <div class="tabs-wrap">
@@ -394,29 +394,30 @@ tbody tr:hover { background: rgba(255,255,255,0.03); }
   <div style="background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 18px;margin-bottom:14px;font-size:var(--fs-body);line-height:1.6">
     <div style="font-size:var(--fs-card-title);font-weight:700;margin-bottom:6px;color:var(--text)">Weekly Snapshot</div>
     <div style="color:var(--muted)">
-      <span style="color:var(--gold);font-weight:600">&#9679;</span> Net Liquidity at $5.80T — Inside the Transition Zone ($5.5-6.0T). April tax season TGA build is the key near-term drain with RRP buffer fully depleted.<br>
-      <span style="color:var(--red);font-weight:600">&#9679;</span> Labour market weakening: Feb NFP printed -92K, 3-month average near zero. UMich sentiment at 56.4, well below the ~77 long-run average.<br>
-      <span style="color:var(--cyan);font-weight:600">&#9679;</span> Rates stable but curve flat: 10Y-3M at 52bps (avg ~153). Credit spreads tight (IG 90bps, HY 327bps) — limited cushion if conditions deteriorate.
+      <span style="color:var(--gold);font-weight:600">&#9679;</span> Net Liquidity at $5.78T &mdash; Inside the Transition Zone ($5.5-6.0T). RRP buffer depleted — TGA movements now drain NL dollar-for-dollar.<br>
+      <span style="color:var(--red);font-weight:600">&#9679;</span> Labour market weakening: Feb26 NFP printed -92K. 3-month average +6K. UMich sentiment depressed at 56.6 (long-run avg ~77).<br>
+      <span style="color:var(--cyan);font-weight:600">&#9679;</span> 10Y at 4.4%, curve flat at 71bps (avg ~153). Credit spreads tight (IG 88bps, HY 321bps) &mdash; limited cushion if conditions deteriorate. VIX elevated at 27.4.
+    
     </div>
   </div>
 
   <div class="kpi-row">
     <div class="kpi" style="border-color:var(--green)"><div class="kpi-label">S&P 500</div><div class="kpi-value">6,477</div><div class="kpi-sub">Mar 26, 2026</div></div>
-    <div class="kpi" style="border-color:var(--gold)"><div class="kpi-label">VIX</div><div class="kpi-value">25.3</div><div class="kpi-sub warn" style="color:var(--gold)">Elevated</div></div>
+    <div class="kpi" style="border-color:var(--gold)"><div class="kpi-label">VIX</div><div class="kpi-value">27.4</div><div class="kpi-sub warn" style="color:var(--gold)">Elevated</div></div>
     <div class="kpi" style="border-color:var(--accent)"><div class="kpi-label">Fed Funds</div><div class="kpi-value">3.6%</div><div class="kpi-sub">Eff. Daily Rate</div></div>
-    <div class="kpi" style="border-color:var(--cyan)"><div class="kpi-label">10Y UST</div><div class="kpi-value">4.3%</div><div class="kpi-sub">Real 1.9% | BE 2.4%</div></div>
+    <div class="kpi" style="border-color:var(--cyan)"><div class="kpi-label">10Y UST</div><div class="kpi-value">4.4%</div><div class="kpi-sub">Real 2.1% | BE 2.3%</div></div>
     <div class="kpi" style="border-color:var(--red)"><div class="kpi-label">Unemployment</div><div class="kpi-value">4.4%</div><div class="kpi-sub warn" style="color:var(--red)">NFP -92K</div></div>
     <div class="kpi" style="border-color:var(--gold)"><div class="kpi-label">CPI YoY</div><div class="kpi-value">2.4%</div><div class="kpi-sub">Core 2.5%</div></div>
     <div class="kpi" style="border-color:var(--gold)"><div class="kpi-label">Net Liquidity</div><div class="kpi-value">$5.78T</div><div class="kpi-sub warn" style="color:var(--gold)">Transition Zone</div></div>
-    <div class="kpi" style="border-color:var(--orange)"><div class="kpi-label">IG / HY Spread</div><div class="kpi-value">87 / 317</div><div class="kpi-sub">bps OAS (tight)</div></div>
+    <div class="kpi" style="border-color:var(--orange)"><div class="kpi-label">IG / HY Spread</div><div class="kpi-value">88 / 321</div><div class="kpi-sub">bps OAS (tight)</div></div>
   </div>
   <div class="grid g2">
-    <div class="card"><div class="card-title">Treasury Yield Curve</div><div class="card-sub">10Y-3M: 52bps (avg ~153bps)</div><canvas id="c-yc" height="180"></canvas><div class="card-asof">As of Mar 27, 2026</div></div>
+    <div class="card"><div class="card-title">Treasury Yield Curve</div><div class="card-sub">10Y-3M: 71bps (avg ~153bps)</div><canvas id="c-yc" height="180"></canvas><div class="card-asof">As of Mar 27, 2026</div></div>
     <div class="card"><div class="card-title">Real GDP Growth (QoQ SAAR)</div><div class="card-sub">Latest: 0.7% (4Q25)</div><canvas id="c-gdp" height="180"></canvas><div class="card-asof">BEA advance estimate, Jan 30 2026</div></div>
   </div>
   <div class="grid g2">
     <div class="card"><div class="card-title">CPI Inflation (YoY)</div><div class="card-sub">Headline 2.4% | Core 2.5% | Feb 2026</div><canvas id="c-cpi" height="170"></canvas><div class="card-asof">BLS release Mar 12, 2026</div></div>
-    <div class="card"><div class="card-title">Nonfarm Payrolls (MoM, K)</div><div class="card-sub">3mo avg: 6K</div><canvas id="c-nfp" height="170"></canvas><div class="card-asof">BLS release Mar 7, 2026</div></div>
+    <div class="card"><div class="card-title">Nonfarm Payrolls (MoM, K)</div><div class="card-sub">3mo avg: +6K</div><canvas id="c-nfp" height="170"></canvas><div class="card-asof">BLS release Mar 7, 2026</div></div>
   </div>
 </div>
 
@@ -449,7 +450,7 @@ tbody tr:hover { background: rgba(255,255,255,0.03); }
       <div class="zone" style="border-color:var(--green)"><div><div class="zone-label" style="color:var(--muted)">Above $6.0T (Ample Reserves)</div><div class="zone-desc">Broadly supportive of risk assets and smooth market functioning.</div></div></div>
       <div class="zone active" style="border-color:var(--gold);background:rgba(255,184,51,0.08)"><div><div class="zone-label" style="color:var(--gold)">$5.5T - $6.0T (Transition Zone)</div><div class="zone-desc">Liquidity cushion declining; heightened market sensitivity to Fed QT and TGA shifts.</div></div><span class="zone-now" style="color:var(--gold)">NOW</span></div>
       <div class="zone" style="border-color:var(--red)"><div><div class="zone-label" style="color:var(--muted)">Below $5.5T (Reserve Scarcity)</div><div class="zone-desc">High risk of market stress, elevated funding costs, and asset drawdowns.</div></div></div>
-      <div class="note" style="background:rgba(255,184,51,0.08);color:var(--gold)">$5.80T. April tax season TGA build is key near-term drain. RRP buffer depleted ($698M).</div>
+      <div class="note" style="background:rgba(255,184,51,0.08);color:var(--gold)">$5.78T. RRP buffer depleted — TGA movements now drain NL dollar-for-dollar.</div>
     </div>
     <div class="card">
       <div class="card-title">Components (FRED API, Mar 25)</div>
@@ -473,7 +474,7 @@ tbody tr:hover { background: rgba(255,255,255,0.03); }
       <div class="card-title">Money Market Stress: SOFR − IORB Spread</div>
       <div class="card-sub">Banking panic gauge: when reserves dry up, interbank borrowing costs surge above the Fed's IORB floor rate</div>
       <div class="kpi-row" style="margin-bottom:10px">
-        <div class="kpi" style="border-color:var(--green);flex:1 1 auto"><div class="kpi-label">SOFR</div><div class="kpi-value">3.64%</div><div class="kpi-sub">Mar 20</div></div>
+        <div class="kpi" style="border-color:var(--green);flex:1 1 auto"><div class="kpi-label">SOFR</div><div class="kpi-value">3.65%</div><div class="kpi-sub">Mar 20</div></div>
         <div class="kpi" style="border-color:var(--accent);flex:1 1 auto"><div class="kpi-label">IORB</div><div class="kpi-value">3.65%</div><div class="kpi-sub">Fed floor rate</div></div>
         <div class="kpi" style="border-color:var(--green);flex:1 1 auto"><div class="kpi-label">Spread</div><div class="kpi-value" id="sofr-val-text">-3 bps</div><div class="kpi-sub warn" style="color:var(--green)">Safe</div></div>
       </div>
@@ -515,25 +516,25 @@ tbody tr:hover { background: rgba(255,255,255,0.03); }
   <div class="kpi-row">
     <div class="kpi" style="border-color:var(--accent)"><div class="kpi-label">Fed Funds</div><div class="kpi-value">3.6%</div></div>
     <div class="kpi" style="border-color:var(--cyan)"><div class="kpi-label">2Y</div><div class="kpi-value">3.8%</div></div>
-    <div class="kpi" style="border-color:var(--accent)"><div class="kpi-label">10Y</div><div class="kpi-value">4.3%</div><div class="kpi-sub">TIPS 1.9%</div></div>
+    <div class="kpi" style="border-color:var(--accent)"><div class="kpi-label">10Y</div><div class="kpi-value">4.4%</div><div class="kpi-sub">TIPS 1.9%</div></div>
     <div class="kpi" style="border-color:var(--purple)"><div class="kpi-label">30Y</div><div class="kpi-value">4.9%</div></div>
-    <div class="kpi" style="border-color:var(--gold)"><div class="kpi-label">IG OAS</div><div class="kpi-value">87bps</div><div class="kpi-sub warn" style="color:var(--gold)">Avg 145</div></div>
-    <div class="kpi" style="border-color:var(--orange)"><div class="kpi-label">HY OAS</div><div class="kpi-value">317bps</div><div class="kpi-sub">Avg 502</div></div>
+    <div class="kpi" style="border-color:var(--gold)"><div class="kpi-label">IG OAS</div><div class="kpi-value">88bps</div><div class="kpi-sub warn" style="color:var(--gold)">Avg 145</div></div>
+    <div class="kpi" style="border-color:var(--orange)"><div class="kpi-label">HY OAS</div><div class="kpi-value">321bps</div><div class="kpi-sub">Avg 502</div></div>
   </div>
   <div class="grid g2">
-    <div class="card"><div class="card-title">Yield Curve</div><div class="card-sub">Slope: 52bps (avg ~153)</div><canvas id="c-yc2" height="200"></canvas><div class="card-asof">As of Mar 27, 2026</div></div>
+    <div class="card"><div class="card-title">Yield Curve</div><div class="card-sub">Slope: 71bps (avg ~153)</div><canvas id="c-yc2" height="200"></canvas><div class="card-asof">As of Mar 27, 2026</div></div>
     <div class="card">
       <div class="card-title">Rate Decomposition</div>
       <table>
         <tr><th>Rate</th><th>Value</th><th>FRED</th></tr>
         <tr><td>Fed Funds</td><td>3.64%</td><td>DFF</td></tr>
-        <tr><td>2-Year</td><td>3.84%</td><td>DGS2</td></tr>
-        <tr><td>5-Year</td><td>3.96%</td><td>DGS5</td></tr>
-        <tr><td>10-Year</td><td>4.33%</td><td>DGS10</td></tr>
-        <tr><td>30-Year</td><td>4.89%</td><td>DGS30</td></tr>
-        <tr><td>TIPS 10Y</td><td>2.02%</td><td>DFII10</td></tr>
-        <tr><td>Breakeven</td><td>2.34%</td><td>T10YIE</td></tr>
-        <tr><td>10Y-3M</td><td>69bps</td><td>T10Y3M</td></tr>
+        <tr><td>2-Year</td><td>3.96%</td><td>DGS2</td></tr>
+        <tr><td>5-Year</td><td>4.08%</td><td>DGS5</td></tr>
+        <tr><td>10-Year</td><td>4.42%</td><td>DGS10</td></tr>
+        <tr><td>30-Year</td><td>4.93%</td><td>DGS30</td></tr>
+        <tr><td>TIPS 10Y</td><td>2.08%</td><td>DFII10</td></tr>
+        <tr><td>Breakeven</td><td>2.31%</td><td>T10YIE</td></tr>
+        <tr><td>10Y-3M</td><td>71bps</td><td>T10Y3M</td></tr>
         <tr><td>30Y Mortgage</td><td>6.38%</td><td>MORTGAGE30US</td></tr>
       </table>
     </div>
@@ -575,12 +576,12 @@ tbody tr:hover { background: rgba(255,255,255,0.03); }
   <div class="sec-hdr"><div class="sec-bar" style="background:var(--accent)"></div><div class="sec-title">Economy — FRED Data</div><span class="badge badge-w">WEEKLY</span></div>
   <div class="kpi-row">
     <div class="kpi" style="border-color:var(--accent)"><div class="kpi-label">GDP 4Q25</div><div class="kpi-value">0.7%</div><div class="kpi-sub">SAAR</div></div>
-    <div class="kpi" style="border-color:var(--orange)"><div class="kpi-label">CPI</div><div class="kpi-value">2.4%</div><div class="kpi-sub">Core 2.5%</div></div>
+    <div class="kpi" style="border-color:var(--orange)"><div class="kpi-label">CPI</div><div class="kpi-value">2.4%</div><div class="kpi-sub">Core 3.1%</div></div>
     <div class="kpi" style="border-color:var(--gold)"><div class="kpi-label">PCE</div><div class="kpi-value">2.8%</div><div class="kpi-sub">Core 3.1%</div></div>
     <div class="kpi" style="border-color:var(--cyan)"><div class="kpi-label">Unemp</div><div class="kpi-value">4.4%</div></div>
     <div class="kpi" style="border-color:var(--red)"><div class="kpi-label">NFP</div><div class="kpi-value">-92K</div></div>
     <div class="kpi" style="border-color:var(--purple)"><div class="kpi-label">Claims</div><div class="kpi-value">210K</div></div>
-    <div class="kpi" style="border-color:var(--red)"><div class="kpi-label">Sentiment</div><div class="kpi-value">56.4</div><div class="kpi-sub warn" style="color:var(--red)">UMich avg ~77</div></div>
+    <div class="kpi" style="border-color:var(--red)"><div class="kpi-label">Sentiment</div><div class="kpi-value">56.6</div><div class="kpi-sub warn" style="color:var(--red)">UMich avg ~77</div></div>
   </div>
   <div class="grid g2">
     <div class="card"><div class="card-title">GDP Growth</div><canvas id="c-gdp2" height="180"></canvas></div>
@@ -594,8 +595,8 @@ tbody tr:hover { background: rgba(255,255,255,0.03); }
         <tr><td>JOLTS Openings</td><td>6,946K</td><td>JTSJOL</td></tr>
         <tr><td>JOLTS Hires</td><td>5,294K</td><td>JTSHIL</td></tr>
         <tr><td>JOLTS Layoffs</td><td>1,631K</td><td>JTSLDL</td></tr>
-        <tr><td>Init. Claims</td><td>205K</td><td>ICSA</td></tr>
-        <tr><td>UMich Sentiment</td><td>56.4</td><td>UMCSENT</td></tr>
+        <tr><td>Init. Claims</td><td>210K</td><td>ICSA</td></tr>
+        <tr><td>UMich Sentiment</td><td>56.6</td><td>UMCSENT</td></tr>
         <tr><td>Debt Service %</td><td>11.3%</td><td>TDSP</td></tr>
         <tr><td>CC Delinquency</td><td>2.9%</td><td>DRCCLACBS</td></tr>
       </table>
