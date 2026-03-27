@@ -38,7 +38,7 @@ if not API_KEY:
     sys.exit(1)
 
 BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
-HTML_FILE = "index.html"
+HTML_FILE = "gtm-dashboard.html"
 
 # ═══════════════════════════════════════════════════════════════
 # FRED API HELPERS
@@ -631,6 +631,234 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
         f'Components (FRED API, {nl_date_short})',
         html
     )
+
+    # ═══ L. AUTO-GENERATE WEEKLY SNAPSHOT ═══
+    print("\n--- Generating Weekly Snapshot ---")
+
+    # Gather all the data points we need
+    nl_t = nl["nl_t"]
+    rrp_m = nl["rrp_m"]
+    tga_t = nl["tga"] / 1e6
+    sofr_val = fred["SOFR"][1]
+    iorb_val = fred["IORB"][1]
+    sofr_iorb_bps = round((sofr_val - iorb_val) * 100)
+    ur = fred["UNRATE"][1]
+    nfp_latest = nfp_vals[-1] if nfp_vals else 0
+    nfp_3mo_avg = round(sum(nfp_vals[-3:]) / min(len(nfp_vals), 3)) if nfp_vals else 0
+    sent = fred["UMCSENT"][1]
+    cpi_latest = fred["CPIAUCSL"][1]
+    core_cpi = fred["CPILFESL"][1]
+    pce = fred["PCEPI"][1]
+    pce_core = fred["PCEPILFE"][1]
+    ig_bps_v = round(fred["BAMLC0A0CM"][1] * 100)
+    hy_bps_v = round(fred["BAMLH0A0HYM2"][1] * 100)
+    slope_v = fred["T10Y3M"][1]
+    slope_bps_v = round(slope_v * 100) if slope_v < 10 else round(slope_v)
+    vix_v = fred["VIXCLS"][1]
+    nlspx_current = nlspx["current"]
+    nlspx_warn = nlspx["warn"]
+    claims_v = fred["ICSA"][1]
+    claims_k = claims_v / 1000 if claims_v > 1000 else claims_v
+    nfp_month = nfp_hist[-1]["label"] if nfp_hist else "Latest"
+
+    # --- Bullet 1 (gold): Net Liquidity status ---
+    if nl_t >= 6.0:
+        nl_zone = "Ample Reserve Zone (above $6.0T)"
+        nl_risk = "Broadly supportive of risk assets."
+    elif nl_t >= 5.5:
+        nl_zone = "Inside the Transition Zone ($5.5-6.0T)"
+        if rrp_m < 10000:  # RRP < $10B effectively depleted
+            nl_risk = "RRP buffer depleted — TGA movements now drain NL dollar-for-dollar."
+        else:
+            nl_risk = f"RRP at ${rrp_m/1e6:.2f}T still provides some buffer."
+    else:
+        nl_zone = "Reserve Scarcity Zone (below $5.5T)"
+        nl_risk = "High risk of funding stress and market volatility."
+
+    bullet1 = f"Net Liquidity at ${nl_t:.2f}T &mdash; {nl_zone}. {nl_risk}"
+
+    # --- Bullet 2 (red): Labor / growth signal ---
+    if nfp_latest < 0:
+        nfp_signal = f"{nfp_month} NFP printed {nfp_latest:+.0f}K"
+    elif nfp_latest < 100:
+        nfp_signal = f"{nfp_month} NFP soft at {nfp_latest:+.0f}K"
+    else:
+        nfp_signal = f"{nfp_month} NFP solid at {nfp_latest:+.0f}K"
+
+    labor_parts = [nfp_signal, f"3-month average {nfp_3mo_avg:+.0f}K"]
+    if ur >= 4.5:
+        labor_parts.append(f"unemployment elevated at {ur:.1f}%")
+    if sent < 65:
+        labor_parts.append(f"UMich sentiment depressed at {sent:.1f} (long-run avg ~77)")
+    elif sent < 75:
+        labor_parts.append(f"UMich sentiment below average at {sent:.1f} (avg ~77)")
+
+    if nfp_latest < 50 or ur >= 4.5:
+        bullet2_prefix = "Labour market weakening"
+    elif nfp_latest >= 200:
+        bullet2_prefix = "Labour market resilient"
+    else:
+        bullet2_prefix = "Labour market mixed"
+
+    bullet2 = f"{bullet2_prefix}: {'. '.join(labor_parts)}."
+
+    # --- Bullet 3 (cyan): Rates / credit signal ---
+    if slope_bps_v < 50:
+        curve_signal = f"curve very flat at {slope_bps_v}bps (avg ~153)"
+    elif slope_bps_v < 100:
+        curve_signal = f"curve flat at {slope_bps_v}bps (avg ~153)"
+    else:
+        curve_signal = f"curve normalising at {slope_bps_v}bps (avg ~153)"
+
+    if ig_bps_v < 100 and hy_bps_v < 400:
+        spread_signal = f"Credit spreads tight (IG {ig_bps_v}bps, HY {hy_bps_v}bps) &mdash; limited cushion if conditions deteriorate"
+    elif ig_bps_v < 150:
+        spread_signal = f"Credit spreads near average (IG {ig_bps_v}bps, HY {hy_bps_v}bps)"
+    else:
+        spread_signal = f"Credit spreads widening (IG {ig_bps_v}bps, HY {hy_bps_v}bps) &mdash; stress building"
+
+    if vix_v > 25:
+        vol_note = f" VIX elevated at {vix_v:.1f}."
+    elif vix_v > 20:
+        vol_note = f" VIX moderately elevated at {vix_v:.1f}."
+    else:
+        vol_note = ""
+
+    bullet3 = f"10Y at {y10_val:.1f}%, {curve_signal}. {spread_signal}.{vol_note}"
+
+    # Build the HTML
+    snapshot_html = (
+        f'<span style="color:var(--gold);font-weight:600">&#9679;</span> {bullet1}<br>\n'
+        f'      <span style="color:var(--red);font-weight:600">&#9679;</span> {bullet2}<br>\n'
+        f'      <span style="color:var(--cyan);font-weight:600">&#9679;</span> {bullet3}'
+    )
+
+    # Replace existing snapshot content
+    html = re.sub(
+        r'(<div style="color:var\(--muted\)">\s*)<span style="color:var\(--gold\).*?</span>.*?(?=\s*</div>\s*</div>\s*<div class="kpi-row">)',
+        f'\\g<1>{snapshot_html}\n    ',
+        html,
+        flags=re.DOTALL
+    )
+    print(f"  Bullet 1: {bullet1[:80]}...")
+    print(f"  Bullet 2: {bullet2[:80]}...")
+    print(f"  Bullet 3: {bullet3[:80]}...")
+
+    # ═══ M. UPDATE NL ZONE NOTE ═══
+    if nl_t >= 6.0:
+        zone_note_text = f"${nl_t:.2f}T. Liquidity ample — supportive of risk assets."
+        zone_note_color = "var(--green)"
+        zone_note_bg = "rgba(0,230,138,0.08)"
+    elif nl_t >= 5.5:
+        zone_note_text = f"${nl_t:.2f}T. {nl_risk}"
+        zone_note_color = "var(--gold)"
+        zone_note_bg = "rgba(255,184,51,0.08)"
+    else:
+        zone_note_text = f"${nl_t:.2f}T. Reserve scarcity — elevated risk of funding stress."
+        zone_note_color = "var(--red)"
+        zone_note_bg = "rgba(255,77,106,0.08)"
+
+    html = re.sub(
+        r'(<div class="note" style="background:)rgba\([^)]+\)(;color:)var\(--\w+\)(">)\$[\d.]+T\.[^<]+',
+        f'\\g<1>{zone_note_bg}\\g<2>{zone_note_color}\\g<3>{zone_note_text}',
+        html,
+        count=1
+    )
+
+    # ═══ N. UPDATE CARD SUBTITLES ═══
+    # Yield curve subtitle
+    html = re.sub(
+        r'(10Y-3M: )\d+bps \(avg ~153bps\)',
+        f'\\g<1>{slope_bps_v}bps (avg ~153bps)',
+        html
+    )
+    html = re.sub(
+        r'(10Y-3M at )\d+bps',
+        f'\\g<1>{slope_bps_v}bps',
+        html
+    )
+    # Slope in sub
+    html = re.sub(
+        r'(Slope: )\d+bps',
+        f'\\g<1>{slope_bps_v}bps',
+        html
+    )
+
+    # GDP subtitle — keep as-is (quarterly, not weekly)
+
+    # CPI subtitle
+    html = re.sub(
+        r'(Headline )[\d.]+% \| Core [\d.]+%',
+        f'\\g<1>{cpi_latest:.1f}% | Core {core_cpi:.1f}%',
+        html
+    )
+
+    # NFP subtitle (3mo avg)
+    html = re.sub(
+        r'3mo avg: [+-]?\d+K',
+        f'3mo avg: {nfp_3mo_avg:+.0f}K' if nfp_3mo_avg != 0 else f'3mo avg: {nfp_3mo_avg:.0f}K',
+        html
+    )
+
+    # 10Y Real / BE in KPI sub
+    tips_val = fred["DFII10"][1]
+    be_val = fred["T10YIE"][1]
+    html = re.sub(
+        r'Real [\d.]+% \| BE [\d.]+%',
+        f'Real {tips_val:.1f}% | BE {be_val:.1f}%',
+        html
+    )
+
+    # NFP value in KPI sub (under Unemployment)
+    html = re.sub(
+        r'(Unemployment.*?kpi-sub[^>]*>)NFP [+-]?\d+K',
+        f'\\g<1>NFP {nfp_latest:+.0f}K',
+        html,
+        flags=re.DOTALL
+    )
+
+    # Core CPI sub
+    html = re.sub(
+        r'(CPI YoY.*?kpi-sub[^>]*>)Core [\d.]+%',
+        f'\\g<1>Core {core_cpi:.1f}%',
+        html,
+        flags=re.DOTALL
+    )
+
+    # Core PCE sub
+    html = re.sub(
+        r'(PCE.*?kpi-sub[^>]*>)Core [\d.]+%',
+        f'\\g<1>Core {pce_core:.1f}%',
+        html,
+        flags=re.DOTALL
+    )
+
+    # ═══ O. UPDATE LABOR TABLE ═══
+    labor_updates = {
+        "Unemployment": f"{ur:.1f}%",
+        "NFP MoM": f"{nfp_latest:+.0f}K",
+        "Avg Hourly Earnings": f"${fred['CES0500000003'][1]:.2f}",
+        "JOLTS Openings": f"{fred['JTSJOL'][1]:,.0f}K",
+        "JOLTS Hires": f"{fred['JTSHIL'][1]:,.0f}K",
+        "JOLTS Layoffs": f"{fred['JTSLDL'][1]:,.0f}K",
+        "Init. Claims": f"{claims_k:.0f}K",
+        "UMich Sentiment": f"{sent:.1f}",
+        "Debt Service %": f"{fred['TDSP'][1]:.1f}%",
+        "CC Delinquency": f"{fred['DRCCLACBS'][1]:.1f}%",
+    }
+    for label, val in labor_updates.items():
+        # Match: label</td><td>VALUE or label</td><td class="neg">VALUE or class="pos"
+        html = re.sub(
+            f'({re.escape(label)}</td><td[^>]*>)[^<]+',
+            f'\\g<1>{val}',
+            html,
+            count=1
+        )
+    # Apply neg/pos class for NFP
+    if nfp_latest < 0:
+        html = re.sub(r'(NFP MoM</td><td)[^>]*(>)', f'\\g<1> class="neg"\\g<2>', html, count=1)
+    else:
+        html = re.sub(r'(NFP MoM</td><td)[^>]*(>)', f'\\g<1>\\g<2>', html, count=1)
 
     # ═══ WRITE UPDATED FILE ═══
     with open(HTML_FILE, "w", encoding="utf-8") as f:
