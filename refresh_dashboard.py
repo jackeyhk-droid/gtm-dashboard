@@ -549,6 +549,55 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
     update_kpi("SOFR", f"{sofr_val:.2f}%")
     update_kpi("IORB", f"{iorb_val:.2f}%")
 
+    # Spread KPI value (use id for specificity — "Spread" label also appears in IG/HY)
+    html = re.sub(
+        r'(id="sofr-val-text">)[^<]+(</div>)',
+        f'\\g<1>{spread_bps:+d} bps\\g<2>',
+        html
+    )
+
+    # Determine SOFR spread zone color and label
+    if spread_bps < 0:
+        sofr_zone_color = "var(--green)"
+        sofr_zone_label = "Safe"
+    elif spread_bps <= 2:
+        sofr_zone_color = "var(--gold)"
+        sofr_zone_label = "Caution"
+    elif spread_bps <= 5:
+        sofr_zone_color = "var(--orange)"
+        sofr_zone_label = "Tight"
+    else:
+        sofr_zone_color = "var(--red)"
+        sofr_zone_label = "Critical"
+
+    # Update SOFR KPI border color
+    html = re.sub(
+        r'(border-color:)var\(--\w+\)(;flex:1 1 auto"><div class="kpi-label">SOFR<)',
+        f'\\g<1>{sofr_zone_color}\\g<2>',
+        html
+    )
+    # Update Spread KPI border color
+    html = re.sub(
+        r'(border-color:)var\(--\w+\)(;flex:1 1 auto"><div class="kpi-label">Spread<)',
+        f'\\g<1>{sofr_zone_color}\\g<2>',
+        html
+    )
+    # Update Spread zone label text and color
+    html = re.sub(
+        r'(id="sofr-val-text">[^<]+</div><div class="kpi-sub warn" style="color:)var\(--\w+\)(">)\w+(<)',
+        f'\\g<1>{sofr_zone_color}\\g<2>{sofr_zone_label}\\g<3>',
+        html
+    )
+    # Update SOFR date sub-label
+    sofr_date_str = datetime.strptime(fred["SOFR"][0], "%Y-%m-%d").strftime("%b %-d")
+    html = re.sub(
+        r'(kpi-label">SOFR</div><div class="kpi-value">[^<]+</div><div class="kpi-sub">)[^<]+(</div>)',
+        f'\\g<1>{sofr_date_str}\\g<2>',
+        html,
+        count=1
+    )
+    print(f"  SOFR spread: {spread_bps:+d} bps → {sofr_zone_label} ({sofr_zone_color})")
+
     # PCE
     pce = fred["PCEPI"][1]
     pce_core = fred["PCEPILFE"][1]
