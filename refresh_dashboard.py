@@ -11,6 +11,15 @@ Usage:
 
 Runs automatically via GitHub Actions every Thursday night (US Eastern).
 Can also be run locally for testing.
+
+Changelog — Jul 2026 hardening:
+  * fetch_fred(): retry with exponential backoff (5 attempts) on FRED 500s /
+    empty responses; "." placeholder rows padded out; raises a clear
+    RuntimeError naming the series instead of crashing later with IndexError.
+  * Fixed Core CPI / Core PCE regex collision that wrote Core PCE into the
+    Economy tab's CPI card (rules now anchored to exact kpi-label text).
+  * Economy "Unemp" KPI, Rates "2Y" KPI and the "TIPS x.x%" sub are now
+    refreshed weekly (previously static).
 """
 
 import os
@@ -18,6 +27,7 @@ import sys
 import json
 import re
 import math
+import time
 from datetime import datetime, timedelta
 
 try:
@@ -40,18 +50,39 @@ if not API_KEY:
 BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
 HTML_FILE = "index.html"
 
+# FRED intermittently returns HTTP 500s or empty observation lists,
+# especially during the Friday 02:00 UTC auto-run window. Every request is
+# retried with exponential backoff before the run aborts with a clear error.
+MAX_ATTEMPTS = 5          # total attempts per series (1 try + 4 retries)
+RETRY_BACKOFF = 2         # sleep = RETRY_BACKOFF ** attempt → 2, 4, 8, 16s
+
 # ═══════════════════════════════════════════════════════════════
 # FRED API HELPERS
 # ═══════════════════════════════════════════════════════════════
 
 def fetch_fred(series_id, limit=1, units=None, frequency=None, start=None, sort="desc"):
-    """Fetch observations from FRED API."""
+    """Fetch observations from FRED API with retry + exponential backoff.
+
+    Hardened against the two transient failure modes seen on Friday runs
+    (RRPONTSYD, SP500, CPILFESL, PAYEMS, JTSJOL returning 500s / empty
+    bodies, which previously surfaced later as IndexError crashes):
+      1. HTTP / connection / JSON errors  → retried up to MAX_ATTEMPTS
+      2. Empty observation lists          → retried up to MAX_ATTEMPTS
+    After all attempts fail, raises RuntimeError naming the series, so the
+    GitHub Action fails loudly at the fetch stage instead of crashing
+    downstream with a cryptic error.
+
+    Missing datapoints come back from FRED as "." (holidays, publication
+    lag). For small requests we over-fetch a few rows so filtering "." out
+    still leaves `limit` real observations, then trim back to `limit`.
+    """
+    padded = limit <= 10
     params = {
         "series_id": series_id,
         "api_key": API_KEY,
         "file_type": "json",
         "sort_order": sort,
-        "limit": limit,
+        "limit": limit + 4 if padded else limit,
     }
     if units:
         params["units"] = units
@@ -60,15 +91,28 @@ def fetch_fred(series_id, limit=1, units=None, frequency=None, start=None, sort=
     if start:
         params["observation_start"] = start
 
-    try:
-        resp = requests.get(BASE_URL, params=params, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        obs = data.get("observations", [])
-        return [(o["date"], float(o["value"])) for o in obs if o["value"] != "."]
-    except Exception as e:
-        print(f"  WARNING: Failed to fetch {series_id}: {e}")
-        return []
+    last_err = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            resp = requests.get(BASE_URL, params=params, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+            obs = data.get("observations", [])
+            vals = [(o["date"], float(o["value"])) for o in obs if o["value"] != "."]
+            if vals:
+                return vals[:limit] if padded else vals
+            last_err = "empty observation list"
+        except Exception as e:
+            last_err = e
+        if attempt < MAX_ATTEMPTS:
+            wait = RETRY_BACKOFF ** attempt
+            print(f"  RETRY {attempt}/{MAX_ATTEMPTS - 1} for {series_id} "
+                  f"in {wait}s ({last_err})")
+            time.sleep(wait)
+
+    raise RuntimeError(
+        f"FRED fetch failed for {series_id} after {MAX_ATTEMPTS} attempts: {last_err}"
+    )
 
 
 def latest(series_id, units=None):
@@ -510,14 +554,20 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
     update_kpi("10Y UST", f"{y10_val:.1f}%")
     update_kpi("10Y", f"{y10_val:.1f}%")
 
+    # 2Y (Rates tab KPI — previously never refreshed, stayed stale)
+    y2 = fred["DGS2"][1]
+    update_kpi("2Y", f"{y2:.1f}%")
+
     # 30Y
     y30 = fred["DGS30"][1]
     update_kpi("30Y", f"{y30:.1f}%")
 
-    # Unemployment
+    # Unemployment (Dashboard "Unemployment" KPI + Economy tab "Unemp" KPI —
+    # the latter was previously never refreshed, stayed stale)
     ur = fred["UNRATE"][1]
     nfp_latest = nfp_vals[-1] if nfp_vals else 0
     update_kpi("Unemployment", f"{ur:.1f}%")
+    update_kpi("Unemp", f"{ur:.1f}%")
 
     # CPI
     cpi_latest = fred["CPIAUCSL"][1]
@@ -858,6 +908,14 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
         html
     )
 
+    # TIPS sub under the Rates-tab "10Y" KPI (previously never refreshed)
+    html = re.sub(
+        r'TIPS [\d.]+%',
+        f'TIPS {tips_val:.1f}%',
+        html,
+        count=1
+    )
+
     # NFP value in KPI sub (under Unemployment)
     html = re.sub(
         r'(Unemployment.*?kpi-sub[^>]*>)NFP [+-]?\d+K',
@@ -866,19 +924,37 @@ def update_html(fred, nl, sofr_spread, nlspx, cpi_hist, nfp_hist):
         flags=re.DOTALL
     )
 
-    # Core CPI sub
+    # Core CPI sub — Dashboard "CPI YoY" KPI.
+    # Anchored to the exact KPI label so the lazy match cannot drift into
+    # another card.
     html = re.sub(
-        r'(CPI YoY.*?kpi-sub[^>]*>)Core [\d.]+%',
+        r'(kpi-label">CPI YoY</div>.*?kpi-sub[^>]*>)Core [\d.]+%',
         f'\\g<1>Core {core_cpi:.1f}%',
         html,
+        count=1,
         flags=re.DOTALL
     )
 
-    # Core PCE sub
+    # Core CPI sub — Economy tab "CPI" KPI.
+    # BUG FIX: this card was previously never updated with Core CPI; worse,
+    # the old Core-PCE rule anchored on the bare text "PCE" (whose first
+    # occurrence is "Headline PCE" in the FOMC table) and its lazy match
+    # landed here, overwriting this sub with the Core *PCE* value.
     html = re.sub(
-        r'(PCE.*?kpi-sub[^>]*>)Core [\d.]+%',
+        r'(kpi-label">CPI</div>.*?kpi-sub[^>]*>)Core [\d.]+%',
+        f'\\g<1>Core {core_cpi:.1f}%',
+        html,
+        count=1,
+        flags=re.DOTALL
+    )
+
+    # Core PCE sub — Economy tab "PCE" KPI (anchored to the KPI label, not
+    # the bare text "PCE", which also appears in the FOMC projections table).
+    html = re.sub(
+        r'(kpi-label">PCE</div>.*?kpi-sub[^>]*>)Core [\d.]+%',
         f'\\g<1>Core {pce_core:.1f}%',
         html,
+        count=1,
         flags=re.DOTALL
     )
 
@@ -930,12 +1006,20 @@ def main():
         print(f"ERROR: {HTML_FILE} not found in current directory.")
         sys.exit(1)
 
-    # Pull all data
-    fred = pull_fred_data()
-    nl = pull_nl_data()
-    sofr = pull_sofr_spread()
-    cpi_hist = pull_cpi_history()
-    nfp_hist = pull_nfp_history()
+    # Pull all data — retries inside fetch_fred() absorb transient FRED
+    # 500s / empty responses; if a series is still failing after all
+    # attempts, abort with a clear message (re-run the Action later).
+    try:
+        fred = pull_fred_data()
+        nl = pull_nl_data()
+        sofr = pull_sofr_spread()
+        cpi_hist = pull_cpi_history()
+        nfp_hist = pull_nfp_history()
+    except RuntimeError as e:
+        print(f"\nERROR: {e}")
+        print("FRED appears to be having issues — re-run this workflow "
+              "in a few minutes (Actions tab → Refresh → Run workflow).")
+        sys.exit(1)
 
     if nl is None:
         print("ERROR: NL calculation failed. Aborting.")
